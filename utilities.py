@@ -18,7 +18,9 @@ def anchor_map(iw,ih,gt,k):
         if temp[coordiate[i]] == 0:
             temp1[i] = 1
             temp[coordiate[i]] = 1
-    return unmap(k,coordiate),temp1 #,unmap(k,coordiate,bboxdata)  # kk,1 ,  kk,4,前两个x,y是0-1,w,h是原值
+
+    coordiate = unmap(k,coordiate[temp1.astype(np.bool)]) # unmap(k,coordiate,bboxdata)  # kk,1 ,  kk,4,前两个x,y是0-1,w,h是原值
+    return coordiate,temp1
 def unmap(k,keep,data = None):
     if data is None :
         res = np.zeros(shape=[k*k,1])
