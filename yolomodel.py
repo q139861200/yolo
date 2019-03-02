@@ -105,7 +105,7 @@ class model:
         print('======1')
         de_net_coordinate,max_cell_index = wrap_bigger_bb(self.forecast_box,temp)
         gt_box    = encode(self.gt[:,0:4]) # xxyy -> xywh
-        Loss["coordinate"] = 1e-10 * Alpha_coord *tf.reduce_sum(tf.square(tf.subtract( de_net_coordinate,gt_                       box[self.column,:])))
+        Loss["coordinate"] = 1e-10 * Alpha_coord *tf.reduce_sum(tf.square(tf.subtract( de_net_coordinate,gt_box[self.column,:])))
         validebelieve = tf.gather(self.net_package[1],vertical_index)
         # N,2
         iou_believe, iou_distrust  =  wrap_bigger_believe(validebelieve,max_cell_index)
