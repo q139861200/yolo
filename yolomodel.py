@@ -128,7 +128,6 @@ class model:
         return  self.input
 
     def get_variable(self,name,kernel,output):
-        shape = self.input.get_shape()
 
         w = tf.get_variable(name='weights',shape=[kernel,kernel, shape[3],output],dtype=tf.float32,
                             initializer = tf.truncated_normal_initializer)
@@ -139,40 +138,4 @@ class model:
         return  M.get_shape()
 
 
-    #print(sess.run([yolomodel.total_loss,yolomodel.printl]))
-
-'''
-data = np.load('Dataset_utils/data.npy')
-ydata =  data[0].reshape(100,1)
-
-xdata = data[1].reshape(100,1)
-x = tf.placeholder(dtype=tf.float32,shape=[None,1])
-
-w = tf.get_variable(name='w_variable',shape=[100,1],dtype=tf.float32,initializer=tf.random_uniform_initializer)
-y = tf.multiply(x,w)
-loss = tf.reduce_mean(tf.pow(((y-ydata)),2))
-tf.add_to_collection('feed_dict',x)
-tf.add_to_collection('_loss',loss)
-saver = tf.train.Saver()
-optimer = tf.train.GradientDescentOptimizer(0.1)
-grads =  optimer.compute_gradients(loss)
-for i,(g,v) in enumerate(grads):
-    if g is not None:
-        grads[i] = [tf.clip_by_value(g,-0.1,0.1),v]
-train_op = optimer.apply_gradients(grads)
-config =  tf.ConfigProto(allow_soft_placement=True )
-config.gpu_options.allow_growth= True
-sess=tf.Session(config=config)
-sess.run(tf.global_variables_initializer())
-
-#sess = tf_debug.LocalCLIDebugWrapperSession(sess)
-
-for i in range(10000):
-
-    sess.run(train_op,feed_dict={'Placeholder:0':xdata})
-    if i % 1000 ==0:
-        print('loss:',sess.run(loss,feed_dict={'Placeholder:0':xdata}))
-        print('left:',i/10000)
-    if i%400 ==0:
-        saver.save(sess,'./Model/model.ckpt',global_step=i+1)
-'''
+ 
