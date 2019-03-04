@@ -2,6 +2,7 @@ import  tensorflow as tf
 import  numpy as np
 from  tensorflow.python import debug as tf_debug
 from  utilities import  *
+from tensorflow.python.ops import array_ops
 from  arguments  import  Alpha_coord,Alpha_noobj
 from Dataset_utils import  norm_data
 class model:
@@ -89,6 +90,7 @@ class model:
         return self.net_package
 
     def construct_loss(self):
+        
         Loss={}
         self.index,self.box_valide = anchor_map(self.iw, self.ih, self.gt, self.k) # kk,1    kk,4
         self.box_valide  = self.box_valide.astype(np.int32)
@@ -98,11 +100,10 @@ class model:
         self.valideboundingbox = tf.gather(self.net_package[2],vertical_index,axis=0)
         self.forecast_box = wrap_decode(self.iw,self.ih,self.valideboundingbox) # x,y,w,h(0-1)  ->  x,y,w,h(N,8)
         temp = self.gt[self.column, :]
-        print('temp:')
+        
         self.printl = tf.print(self.forecast_box,[self.forecast_box,tf.shape(self.forecast_box)])
         self.forecast_box = tf.cast(tf.reshape(self.forecast_box,(-1,8)),tf.float32)
-        print(temp)
-        print('======1')
+
         de_net_coordinate,max_cell_index = wrap_bigger_bb(self.forecast_box,temp)
         gt_box    = encode(self.gt[:,0:4]) # xxyy -> xywh
         Loss["coordinate"] = 1e-10 * Alpha_coord *tf.reduce_sum(tf.square(tf.subtract( de_net_coordinate,gt_box[self.column,:])))
@@ -137,5 +138,26 @@ class model:
     def get_Shape(self,M):
         return  M.get_shape()
 
-
+ 
+    def focal_loss(prediction_tensor, target_tensor, weights=None, alpha=0.25, gamma=2):
+        """Compute focal loss for predictions.
+              Multi-labels Focal loss formula:
+                FL = -alpha * (z-p)^gamma * log(p) -(1-alpha) * p^gamma * log(1-p)
+                 ,which alpha = 0.25, gamma = 2, p = sigmoid(x), z = target_tensor.
+ 
+        """
+        sigmoid_p = tf.nn.sigmoid(prediction_tensor)
+        zeros = array_ops.zeros_like(sigmoid_p, dtype=sigmoid_p.dtype)
+    
+        # For poitive prediction, only need consider front part loss, back part is 0;
+        # target_tensor > zeros <=> z=1, so poitive coefficient = z - p.
+        pos_p_sub = array_ops.where(target_tensor > zeros, target_tensor - sigmoid_p, zeros)
+    
+        # For negative prediction, only need consider back part loss, front part is 0;
+        # target_tensor > zeros <=> z=1, so negative coefficient = 0.
+        neg_p_sub = array_ops.where(target_tensor > zeros, zeros, sigmoid_p)
+        per_entry_cross_ent = - alpha * (pos_p_sub ** gamma) * tf.log(tf.clip_by_value(sigmoid_p, 1e-8, 1.0)) \
+                          - (1 - alpha) * (neg_p_sub ** gamma) * tf.log(tf.clip_by_value(1.0 - sigmoid_p, 1e-8, 1.0))
+        return tf.reduce_sum(per_entry_cross_ent)
+ 
  
